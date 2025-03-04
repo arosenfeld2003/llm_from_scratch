@@ -12,14 +12,15 @@ def create_vocab(text):
         preprocessed  = re.split(r'([,.:;?_!"()\']|--|\s)', raw_text)
         # remove whitespace - THIS IS AN IMPORTANT DISCUSSION
         preprocessed = [token.strip() for token in preprocessed if token.strip()]
-        print(f"length of preprocessed: {len(preprocessed)}")
+        # sort and remove duplicates
         all_tokens = sorted(set(preprocessed))
-
+        # add unknown token and end of text token
+        all_tokens.extend(["<|endoftext|>", "<|unk|>"])
         vocab = {token:integer for integer,token in enumerate(all_tokens)}
         return vocab
 
 
-class SimpleTokenizerV1:
+class SimpleTokenizerV2:
     def __init__(self, vocab):
         self.str_to_int = vocab
         self.int_to_str = {i:s for s,i in vocab.items()}
@@ -27,23 +28,33 @@ class SimpleTokenizerV1:
     def encode(self, text):
         preprocessed = re.split(r'([,.:;?_!"()\']|--|\s)', text)
         preprocessed = [token.strip() for token in preprocessed if token.strip()]
+        # replace unknown tokens with <|unk|> token
+        preprocessed = [
+            item if item in self.str_to_int 
+            else "<|unk|>" for item in preprocessed
+        ]
         return [self.str_to_int[token] for token in preprocessed]
     
     def decode(self, tokens):
-        text = "".join([self.int_to_str[token] for token in tokens])
+        text = " ".join([self.int_to_str[token] for token in tokens])
+        # Replace spaces before the specified punctuations
         text = re.sub(r'\s+([,.?!"()\'])', r'\1', text)
         return text
-    
-vocab = create_vocab('the-verdict.txt')
-tokenizer = SimpleTokenizerV1(vocab)
 
-text = """
-        "It's the last he painted, you know,"
-        Mrs. Gisburn said with pardonable pride.
-    """
 
-ids = tokenizer.encode(text)
-print(ids)
+# Testing
 
-decoded = tokenizer.decode(ids)
-print(decoded)
+# vocab = create_vocab('the-verdict.txt')
+# tokenizer = SimpleTokenizerV2(vocab)
+
+# tokenizer = SimpleTokenizerV2(vocab)
+
+# text1 = "Hello, do you like tea?"
+# text2 = "In the sunlit terraces of the palace."
+
+# text = " <|endoftext|> ".join((text1, text2))
+# print(text)
+
+# print(tokenizer.encode(text))
+
+# print(tokenizer.decode(tokenizer.encode(text)))
